@@ -4,8 +4,10 @@ const { addMocksToSchema } = require('@graphql-tools/mock');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
 
 const typeDefs = require('./schema');
+const resolvers = require("./resolver");
+const TrackAPI = require("./datasources/track-api");
 
-const mocks = {
+/* const mocks = {
   Query: () => ({
     tracksForHome: () => [...new Array(6)],
   }),
@@ -24,16 +26,29 @@ const mocks = {
     length: () => 1210,
     modulesCount: () => 6,
   }),
-};
+}; */
 
 async function startApolloServer() {
-  const server = new ApolloServer({
+  /* const server = new ApolloServer({
     schema: addMocksToSchema({
       schema: makeExecutableSchema({ typeDefs }),
       mocks,
     }),
+  }); */
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers
   });
-  const { url } = await startStandaloneServer(server);
+  const { url } = await startStandaloneServer(server, {
+    context: async () => {
+      const { cache } = server;
+      return {
+        dataSources: {
+          trackAPI: new TrackAPI({cache})
+        }
+      }
+    }
+  });
 
   console.log(`
       🚀  Server is running
